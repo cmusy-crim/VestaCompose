@@ -116,6 +116,140 @@ services:
       - MONGODB_PASS=whateve4rlogin
     volumes:
       - /data
+      
+  webportal:
+    image: docker-registry.crim.ca/vesta/webportal:1.1.1
+    ports:
+      - "8888:8888"
+    # ENVIRONNEMENT FILE:
+    # Add environment variables from a file. Can be a single value or a list.
+    # Environment variables specified in environment override these values (environment variables with only a key are resolved to their values on the machine Compose is running on).
+    # Values set in the shell environment will override those set in the .env file.
+    #env_file: docker-compose-default.env
+    # COMMAND:
+    # command "node" has 5 parameters :
+    # - main js file of the frontend application (absolute path)
+    # - Public/external base URL of this frontend application (this value must be the same than the VESTAFRONTENDURL parameter in the portapi container)
+    # - Public/external base URL of the backend application (portapi container)
+    # - Demo mode (value is either "DEMO" or ""). Demo mode sets limitations on registrations and data in the platform.
+    # - Google reCaptcha public key (this value must be the same than the VESTACAPTCHAPUBLICKEY parameter in the portapi container)
+    # The Captcha must be configured with the public/external url of the frontend of the platform.
+    # See https://www.google.com/recaptcha/admin
+    # Note that Google reCaptcha is only used in Demo mode for researcher signup (and Demo mode is disabled by default)
+    command: [ "node",
+               "/usr/local/vesta/popcorn.webmaker.org/server.js",
+               "${VESTAFRONTENDURL}",
+               "${VESTABACKENDURL}",
+               "",
+               "${VESTACAPTCHAPUBLICKEY}" ]
+               
+  portalapi:
+    image: docker-registry.crim.ca/vesta/portalapi:1.1.1
+    ports:
+       - "8889:8080"
+    links:
+      - mss
+      - swift
+    # ENVIRONNEMENT FILE:
+    # Add environment variables from a file. Can be a single value or a list.
+    # Environment variables specified in environment override these values (environment variables with only a key are resolved to their values on the machine Compose is running on).
+    # Values set in the shell environment will override those set in the .env file.
+    #env_file: docker-compose-default.env
+    # ENVIRONNEMENT VARIABLES:
+    # Environment variables with only a key are resolved to their values on the machine Compose is running on
+    environment:
+      # Whitelist to allow requests from selected ips (if empty, no restriction)
+      VESTAALLOWEDIPSFROM: ""
+      # Secret key (HMAC using SHA-512 hash algorithm) to sign the authentication tokens for the HTTP requests to the Vesta Services REST API.
+      # The value must be the same as the value configured in the configuration files of mss and sg containers
+      # The key is always required, but the Vesta Services authentication is disabled by default
+      VESTAJWTSECRETKEY: "${VESTAJWTSECRETKEY}"
+      # Public and private keys (RSASSA-PKCS-v1_5 using SHA-512 hash algorithm) to sign the authentication tokens to sign up in the platform
+      VESTAJWTSIGNUPPUBLICKEY: "${VESTAJWTSIGNUPPUBLICKEY}"
+      VESTAJWTSIGNUPPRIVATEKEY: "${VESTAJWTSIGNUPPRIVATEKEY}"
+      # Expose method to get a temporary authentication token for the HTTP requests to the Vesta Services REST API
+      VESTAALLOWTEMPSERVICESTOKEN: "false"
+      # Allow admin users to delete datasets and studies (and all related data, including files in the MSS and annotations in the JASS) using the Support page in the platform or using a direct request to the REST API of the backend of the platform
+      VESTAALLOWADMINDELETEDATASETS: "true"
+      VESTAALLOWADMINDELETESTUDIES: "true"
+      # Public and private keys for Google Captcha (the public key value must be the same than the command parameter in the webportal container)
+      # The Captcha must be configured with the public/external url of the frontend of the platform.
+      # See https://www.google.com/recaptcha/admin
+      # Note that Google reCaptcha is only used in Demo mode for researcher signup (and Demo mode is disabled by default)
+      VESTACAPTCHAPUBLICKEY: "${VESTACAPTCHAPUBLICKEY}"
+      VESTACAPTCHAPRIVATEKEY: "${VESTACAPTCHAPRIVATEKEY}"
+      # Support email
+      VESTASUPPORTEMAIL: "${VESTASUPPORTEMAIL}"
+      # Default admin account
+      VESTAADMINEMAIL: "${VESTAADMINEMAIL}"
+      VESTAADMINPASSWORD: "${VESTAADMINPASSWORD}"
+      # Logs
+      VESTA_LOG_LEVEL: "info"
+      VESTA_LOGS_PATH: ""
+      # Public/external base URL of the frontend of the platform (this value must be the same than the command parameter in the webportal container)
+      VESTAFRONTENDURL: "${VESTAFRONTENDURL}"
+      # Base URL for the Vesta Services
+      VESTASERVICESVLBURL: "http://sg:5000"
+      VESTAMSSSERVICEURL: "http://mss:5000"
+      VESTAJASSURL: "http://jass:5000"
+      # Filename for the configuration file of the Vesta services in the backend of the platform
+      VESTASERVICESCONFFILENAME: "services_1.7.conf"
+      # Default timeout for the HTTP requests from the backend
+      VESTAHTTPREQUESTSTIMEOUT: "30 seconds"
+      # Limitations :
+      # Max number of datasets (videos) per user
+      VESTAMAXDATASETSPERUSER: "10"
+      # Max file size of dataset (video)
+      VESTADATASETSMAXFILESIZEMB: "300"   
+      # Warning period before the expiration date of the dataset
+      VESTADATASETSWARNINGEXPIRPERIOD: "1 week"
+      # Expiration period of the dataset (then the dataset is deleted)
+      VESTADATASETSEXPIRPERIOD: "3 months"
+      # Max file duration of dataset (video)
+      VESTADATASETSMAXFILEDURPERIOD: "30 minutes"
+      # Warning period before the expiration date of inactive accounts
+      VESTAACCOUNTWARNINGEXPPERIOD: "1 week"
+      # Expiration period of inactive accounts (then the account is deleted)
+      VESTAACCOUNTEXPIRPERIOD: "3 months"
+      # Expiration period of the dataset lock (a dataset is locked when a user edits it, locks are removed after an expiration period after the last modified date)
+      VESTALOCKEXPIRPERIOD: "24 hours"
+      # Expiration period of the sign up token for PI users (then the account is suspended)
+      VESTAPROFSIGNUPEXPIRPERIOD: "1 week"
+      # Expiration period of the sign up token for Researcher users (then the account is deleted)
+      VESTARESEARCHERSIGNUPEXPIRPERIOD: "1 week"
+      # Enable demo registrations (enable if the webportal command has enabled Demo mode, disable otherwise)
+      VESTADEMOINSCRIPTIONS: "false"
+      # Default PI account (email, first name, last name and password) for demo registrations
+      # Note that this is only required in Demo mode for researcher signup (and Demo mode is disabled by default)
+      VESTADEFAULTPIEMAIL: "${VESTADEFAULTPIEMAIL}"
+      VESTADEFAULTPIFIRSTNAME: "${VESTADEFAULTPIFIRSTNAME}"
+      VESTADEFAULTPILASTNAME: "${VESTADEFAULTPILASTNAME}"
+      VESTADEFAULTPIPASSWORD: "${VESTADEFAULTPIPASSWORD}"
+      # Default university name for demo registrations
+      # Note that this is only required in Demo mode for researcher signup (and Demo mode is disabled by default)
+      VESTADEFAULTUNIVNAME: "CLOUD"
+      # Max number of studies per Researcher user
+      VESTAMAXSTUDIESPERRESEARCHER: "10"
+      # Enable Swagger
+      VESTASWAGGER: "true"
+      # Mongo DB connection (host and port)
+      VESTAMONGOHOST: "webdb"
+      VESTAMONGOPORT: "27017"
+      # Mail server connection (host, port, username and password)
+      VESTAEMAILHOST: "${VESTAEMAILHOST}"
+      VESTAEMAILPORT: "${VESTAEMAILPORT}"
+      VESTAEMAILUSER: "${VESTAEMAILUSER}"
+      VESTAEMAILPASSWORD: "${VESTAEMAILPASSWORD}"
+      # Tomcat settings
+      CATALINA_OPTS: "-Dfile.encoding=utf8"
+  
+  webdb:
+    image: mongo
+    environment:
+      AUTH: "no"
+    expose:
+      - 27017
+      - 28017
 
 # For performance issues.
 networks:
