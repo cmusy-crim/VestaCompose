@@ -1,0 +1,123 @@
+# Docker compose Script for Vesta Services
+# April 2017
+# Fred Osterrath
+# CRIM
+
+version: "2"
+
+services:
+  musictrans:
+    image: docker-registry.crim.ca/vesta/service_musictranscription:0.1.0
+    links:
+      - amqp
+      - mss
+      - cb_server
+    environment:
+      C_FORCE_ROOT: "True"
+    volumes:
+      - ./celeryconfig.py:/conf/celeryconfig.py
+    working_dir: /conf
+    command: celery worker -A service_musictranscription.worker -l INFO --config=celeryconfig -Q musictrans -n musictrans.%n
+    logging:
+      options:
+        max-size: "100m"
+
+  dia:
+    image: docker-registry.crim.ca/vesta/service-dia:0.7.3
+    links:
+      - amqp
+      - mss
+      - cb_server
+    environment:
+      C_FORCE_ROOT: "True"
+    volumes:
+      - ./celeryconfig.py:/conf/celeryconfig.py
+    working_dir: /conf
+    command: celery worker -A Service_Dia.worker -l INFO --config=celeryconfig -Q diarisation -n dia.%n
+    logging:
+      options:
+        max-size: "100m"
+
+  stt:
+    image: docker-registry.crim.ca/vesta/service_stt:0.8.3
+    links:
+      - amqp
+      - mss
+      - cb_server
+    environment:
+      C_FORCE_ROOT: "True"
+    volumes:
+      - ./celeryconfig.py:/conf/celeryconfig.py
+    working_dir: /conf
+    command: celery worker -A Service_STT.worker -l INFO --config=celeryconfig -Q stt -n stt.%n
+    logging:
+      options:
+        max-size: "100m"
+
+  matching:
+    image: docker-registry.crim.ca/vesta/service-matching:0.1.2
+    links:
+      - amqp
+      - mss
+      - cb_server
+    environment:
+      C_FORCE_ROOT: "True"
+    volumes:
+      - ./celeryconfig.py:/conf/celeryconfig.py
+    working_dir: /conf
+    command: /root/matching/bin/celery worker -A Service_Matching.worker -l INFO --config=celeryconfig -Q matching -n matching.%n
+    logging:
+      options:
+        max-size: "100m"
+
+  transition:
+    image: docker-registry.crim.ca/vesta/service-transition:1.1.5
+    links:
+      - amqp
+      - mss
+      - cb_server
+    environment:
+      C_FORCE_ROOT: "True"
+    volumes:
+      - ./celeryconfig.py:/conf/celeryconfig.py
+    working_dir: /conf
+    command: celery worker -A Service_Transition.worker -l INFO --config=celeryconfig -Q transition -n transition.%n
+    logging:
+      options:
+        max-size: "100m"
+
+  faceanalysis:
+    image: docker-registry.crim.ca/vesta/service-faceanalysis:1.0.1
+    links:
+      - amqp
+      - mss
+      - cb_server
+    environment:
+      C_FORCE_ROOT: "True"
+    volumes:
+      - ./celeryconfig.py:/conf/celeryconfig.py
+    working_dir: /conf
+    command: celery worker -A Service_Faces.worker -l INFO --config=celeryconfig -Q faceanalysis -n faceanalysis.%n
+    logging:
+      options:
+        max-size: "100m"
+
+  portainer:
+    image: portainer/portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "9000:9000"
+    logging:
+      options:
+        max-size: "100m"
+
+  sg:
+    environment:
+      VRP_CONFIGURATION: /opt/sg_cfg/my_conf.py
+      VESTAURLROOT: "${VESTAURLROOT}"
+
+  mss:
+    image: docker-registry.crim.ca/vesta/mss:1.7.0
+    environment:
+      VESTAURLROOT: "${VESTAURLROOT}"

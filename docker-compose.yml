@@ -9,6 +9,9 @@ services:
     ports:
       - "15672:15672"
     restart: always
+    logging:
+      options:
+        max-size: "100m"
 
   swift:
     image: vestaservices/swift-local:latest
@@ -18,6 +21,9 @@ services:
       - "8080"
     ports:
       - "8080:8080"
+    logging:
+      options:
+        max-size: "100m"
 
   mss:
     image: docker-registry.crim.ca/vesta/mss:1.7.0
@@ -32,6 +38,10 @@ services:
     restart: always
     environment:
       VRP_CONFIGURATION: /opt/mss_cfg/conf.py
+      VESTAURLROOT: "${VESTAURLROOT}"
+    logging:
+      options:
+        max-size: "100m"
 
   transcoder:
     image: docker-registry.crim.ca/vesta/service-transcoding:0.2.8
@@ -40,10 +50,13 @@ services:
       - mss
     user: "1000"
     restart: always
+    logging:
+      options:
+        max-size: "100m"
 
   sg:
-    image: docker-registry.crim.ca/vesta/sg:1.7.3_old_build
-    # image: vestaservices/servicegateway:1.7.6
+    #image: docker-registry.crim.ca/vesta/sg:1.7.3_old_build
+    image: vestaservices/servicegateway:1.7.6
     links:
       - amqp
     ports:
@@ -53,10 +66,10 @@ services:
       - /mnt/volume
     environment:
       VRP_CONFIGURATION: /opt/sg_cfg/conf.py
+    restart: always
     logging:
       options:
         max-size: "100m"
-    restart: always
 
   cb_server:
     build: ./callback_server/
@@ -93,6 +106,9 @@ services:
       AMQP_HOST: "amqp"
       AMQP_ADMIN_HOST: "amqp"
       FLOWER_BASIC_AUTH: "vesta:admin"
+    logging:
+      options:
+        max-size: "100m"
 
   jass:
     image: vestaservices/jass:latest
@@ -104,9 +120,12 @@ services:
       - "5002:5000"
     depends_on:
      - mongo
+    logging:
+      options:
+        max-size: "100m"
 
   mongo:
-    image: tutum/mongodb
+    image: vestaservices/mongo:latest
     expose:
       - 27017
       - 28017
@@ -116,6 +135,9 @@ services:
       - MONGODB_PASS=whateve4rlogin
     volumes:
       - /data
+    logging:
+      options:
+        max-size: "100m"
       
   webportal:
     image: docker-registry.crim.ca/vesta/webportal:1.1.1
@@ -142,6 +164,9 @@ services:
                "${VESTABACKENDURL}",
                "",
                "${VESTACAPTCHAPUBLICKEY}" ]
+    logging:
+      options:
+        max-size: "100m"
                
   portalapi:
     image: docker-registry.crim.ca/vesta/portalapi:1.1.1
@@ -242,18 +267,26 @@ services:
       VESTAEMAILPASSWORD: "${VESTAEMAILPASSWORD}"
       # Tomcat settings
       CATALINA_OPTS: "-Dfile.encoding=utf8"
+    logging:
+      options:
+        max-size: "100m"
   
   webdb:
     image: mongo
     environment:
       AUTH: "no"
+    volumes:
+      - /data
     expose:
       - 27017
       - 28017
+    logging:
+      options:
+        max-size: "100m"
 
 # For performance issues.
-networks:
-  default:
-    driver: bridge
-    driver_opts:
-      com.docker.network.driver.mtu: 1450
+#networks:
+#  default:
+#    driver: bridge
+#    driver_opts:
+#      com.docker.network.driver.mtu: 1450

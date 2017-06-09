@@ -11,6 +11,8 @@ found in this file, you need to set the environment variable named
 "VRP_CONFIGURATION" to the path of your own copy before launching the program.
 """
 
+from os import environ
+
 SECURITY = {"BYPASS_SECURITY": True}
 
 CELERY = {
@@ -95,7 +97,7 @@ WORKER_SERVICES = {
 
 MSS = {
     'SWIFT_AUTHENTIFICATION_OPTIONS': 'V1_LOCAL',
-    'SWIFT_REDIRECT_URL': 'http://swift:8080',
+    'SWIFT_REDIRECT_URL': '{0}:8080'.format(environ['VESTAURLROOT']),
     'STORAGE_URL_IGNORE_PREFIX_FOR_TEMP_URL': 'swift',
     'SWIFT': {
         'os-auth-url': 'http://swift:8080/auth/v1.0',
