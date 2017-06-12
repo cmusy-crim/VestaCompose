@@ -97,7 +97,7 @@ WORKER_SERVICES = {
 
 MSS = {
     'SWIFT_AUTHENTIFICATION_OPTIONS': 'V1_LOCAL',
-    'SWIFT_REDIRECT_URL': '{0}:8080'.format(environ['VESTAURLROOT']),
+    # 'SWIFT_REDIRECT_URL': '{0}:8080'.format(environ['VESTAURLROOT']),
     'STORAGE_URL_IGNORE_PREFIX_FOR_TEMP_URL': 'swift',
     'SWIFT': {
         'os-auth-url': 'http://swift:8080/auth/v1.0',

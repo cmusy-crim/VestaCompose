@@ -12,6 +12,9 @@ CELERY = {
     'CELERY_RESULT_SERIALIZER': "json",
     'CELERY_ACCEPT_CONTENT': ["json"]}
 
+GET_STORAGE_DOC_REQ_URL = "http://mss:5000/get/{storage_doc_id}"
+POST_ANNOTATIONS_REQ_URL = ("http://jass:5000/document/{ann_doc_id}/annotations?storageType=2")
+
 # DATABASES = {
 #     'Invocations': {
 #         'filename': "/mnt/volume/service_invocations.db",
